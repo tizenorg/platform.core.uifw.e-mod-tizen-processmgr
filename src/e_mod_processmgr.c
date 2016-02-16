@@ -430,10 +430,7 @@ _e_processmgr_send_pid_action(int pid, E_ProcessMgr_Action act)
 
    // send the message
    if (!eldbus_connection_send(conn, msg, NULL, NULL, -1))
-     {
-        eldbus_message_unref(msg);
-        return;
-     }
+     return;
 
    eldbus_message_unref(msg);
 }
