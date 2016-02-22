@@ -2,7 +2,7 @@
 %bcond_with wayland
 
 Name: e-mod-tizen-processmgr
-Version: 0.0.1
+Version: 0.1.0
 Release: 1
 Summary: The enlightenment processmgr module for Tizen
 Group: Graphics & UI Framework/Other
