@@ -25,6 +25,7 @@ static Eina_Bool _e_processmgr_cb_client_remove(void *data EINA_UNUSED, int type
 static Eina_Bool _e_processmgr_cb_client_iconify(void *data EINA_UNUSED, int type EINA_UNUSED, void *event);
 static Eina_Bool _e_processmgr_cb_client_uniconify(void *data EINA_UNUSED, int type EINA_UNUSED, void *event);
 static Eina_Bool _e_processmgr_cb_client_visibility_change(void *data EINA_UNUSED, int type EINA_UNUSED, void *event);
+static Eina_Bool _e_processmgr_cb_client_focus_in(void *data EINA_UNUSED, int type EINA_UNUSED, void *event);
 
 static void _pol_cb_hook_client_visibility(void *d EINA_UNUSED, E_Client *ec);
 
@@ -212,6 +213,13 @@ _e_processmgr_client_info_del(E_Client *ec)
    winfo = _e_processmgr_client_info_find(_pm, ec);
    if (!winfo) return;
 
+   if (_pm->active_win == ec)
+     {
+        _pm->active_win = NULL;
+        ELOGF("PROCESSMGR STATE", "PROCESS_DEACTIVATE. PID:%d", NULL, NULL, winfo->pid);
+        _e_processmgr_send_pid_action(winfo->pid, PROCESS_DEACTIVATE);
+     }
+
    _e_processmgr_processinfo_del(winfo->pid, ec);
 
    eina_hash_del_by_key(_pm->wins_hash, &ec);
@@ -233,6 +241,7 @@ _e_processmgr_cb_client_add(void *data EINA_UNUSED, int type EINA_UNUSED, void *
    if (!ev) return ECORE_CALLBACK_PASS_ON;
 
    ec = ev->ec;
+
    _e_processmgr_client_info_add(ec);
 
    return ECORE_CALLBACK_PASS_ON;
@@ -298,6 +307,61 @@ _e_processmgr_cb_client_visibility_change(void *data EINA_UNUSED, int type EINA_
    ec = ev->ec;
    if (ec->visibility.obscured == E_VISIBILITY_UNOBSCURED)
      _e_processmgr_client_thaw(ec);
+
+   return ECORE_CALLBACK_PASS_ON;
+}
+
+static Eina_Bool
+_e_processmgr_cb_client_focus_in(void *data EINA_UNUSED, int type EINA_UNUSED, void *event)
+{
+   E_Event_Client *ev;
+   E_Client *ec;
+   E_Client *ec_deactive;
+   E_WindowInfo *winfo = NULL;
+   E_WindowInfo *winfo_deactive = NULL;
+   E_ProcessInfo *pinfo  = NULL;
+   Eina_Bool change_active = EINA_FALSE;
+
+   ev = event;
+   if (!ev) return ECORE_CALLBACK_PASS_ON;
+
+   ec = ev->ec;
+
+   winfo = _e_processmgr_client_info_find(_pm, ec);
+   if (!winfo) return EINA_FALSE;
+
+   if (winfo->pid <= 0) return EINA_FALSE;
+
+   pinfo = _e_processmgr_processinfo_find(_pm, winfo->pid);
+   if (!pinfo) return EINA_FALSE;
+
+   ec_deactive = _pm->active_win;
+   _pm->active_win = ec;
+
+   winfo_deactive = _e_processmgr_client_info_find(_pm, ec_deactive);
+   if (!winfo_deactive)
+     {
+        change_active = EINA_TRUE;
+     }
+   else
+     {
+        if (winfo_deactive->pid != winfo->pid)
+          {
+             change_active = EINA_TRUE;
+          }
+     }
+
+   if (change_active)
+     {
+        ELOGF("PROCESSMGR STATE", "PROCESS_ACTIVATE. PID:%d", NULL, NULL, winfo->pid);
+        _e_processmgr_send_pid_action(winfo->pid, PROCESS_ACTIVATE);
+
+        if (winfo_deactive)
+          {
+             ELOGF("PROCESSMGR STATE", "PROCESS_DEACTIVATE. PID:%d", NULL, NULL, winfo_deactive->pid);
+             _e_processmgr_send_pid_action(winfo->pid, PROCESS_DEACTIVATE);
+          }
+     }
 
    return ECORE_CALLBACK_PASS_ON;
 }
@@ -457,6 +521,7 @@ e_mod_processmgr_init(void)
    E_LIST_HANDLER_APPEND(handlers, E_EVENT_CLIENT_ICONIFY, _e_processmgr_cb_client_iconify, NULL);
    E_LIST_HANDLER_APPEND(handlers, E_EVENT_CLIENT_UNICONIFY, _e_processmgr_cb_client_uniconify, NULL);
    E_LIST_HANDLER_APPEND(handlers, E_EVENT_CLIENT_VISIBILITY_CHANGE, _e_processmgr_cb_client_visibility_change, NULL);
+   E_LIST_HANDLER_APPEND(handlers, E_EVENT_CLIENT_FOCUS_IN, _e_processmgr_cb_client_focus_in, NULL);
 
    hook = e_client_hook_add(E_CLIENT_HOOK_EVAL_VISIBILITY, _pol_cb_hook_client_visibility, NULL);
    if (hook) hooks_ec = eina_list_append(hooks_ec, hook);
