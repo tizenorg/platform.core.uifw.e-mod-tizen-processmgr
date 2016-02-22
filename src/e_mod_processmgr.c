@@ -486,7 +486,7 @@ _e_processmgr_send_pid_action(int pid, E_ProcessMgr_Action act)
    param_pid = (int)pid;
    param_act = (int)act;
 
-   if (!eldbus_message_arguments_append(msg, "ii", param_pid, param_act))
+   if (!eldbus_message_arguments_append(msg, "ii", param_act, param_pid))
      {
         eldbus_message_unref(msg);
         return;
