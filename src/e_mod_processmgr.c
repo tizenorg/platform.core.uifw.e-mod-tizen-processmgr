@@ -407,6 +407,14 @@ _e_processmgr_client_freeze_condition_check(E_Client *ec)
              freeze = EINA_FALSE;
              break;
           }
+        else
+          {
+             if (temp_ec->exp_iconify.by_client)
+               {
+                  freeze = EINA_FALSE;
+                  break;
+               }
+          }
      }
 
    return freeze;
