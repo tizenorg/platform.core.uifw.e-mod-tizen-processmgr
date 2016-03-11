@@ -16,6 +16,8 @@ BuildRequires: pkgconfig(x11)
 Requires: libX11
 %endif
 
+%global TZ_SYS_RO_SHARE  %{?TZ_SYS_RO_SHARE:%TZ_SYS_RO_SHARE}%{!?TZ_SYS_RO_SHARE:/usr/share}
+
 %description
 This package is a processmgr module for enlightenment.
 
@@ -39,8 +41,8 @@ make
 rm -rf %{buildroot}
 
 # for license notification
-mkdir -p %{buildroot}/usr/share/license
-cp -a %{_builddir}/%{buildsubdir}/COPYING %{buildroot}/usr/share/license/%{name}
+mkdir -p %{buildroot}/%{TZ_SYS_RO_SHARE}/license
+cp -a %{_builddir}/%{buildsubdir}/COPYING %{buildroot}/%{TZ_SYS_RO_SHARE}/license/%{name}
 
 # install
 make install DESTDIR=%{buildroot}
@@ -51,4 +53,4 @@ find  %{buildroot}%{_libdir}/enlightenment/modules/%{name} -name *.la | xargs rm
 %files
 %defattr(-,root,root,-)
 %{_libdir}/enlightenment/modules/e-mod-tizen-processmgr
-/usr/share/license/%{name}
+%{TZ_SYS_RO_SHARE}/license/%{name}
