@@ -26,7 +26,7 @@ This package is a processmgr module for enlightenment.
 
 %build
 export GC_SECTIONS_FLAGS="-fdata-sections -ffunction-sections -Wl,--gc-sections"
-export CFLAGS+=" -Wall -Werror-implicit-function-declaration -g -fPIC -rdynamic ${GC_SECTIONS_FLAGS} -DE_LOGGING=1"
+export CFLAGS+=" -Wall -Werror-implicit-function-declaration -g -fPIC -Werror -rdynamic ${GC_SECTIONS_FLAGS} -DE_LOGGING=1"
 export LDFLAGS+=" -Wl,--hash-style=both -Wl,--as-needed -Wl,--rpath=/usr/lib"
 
 %if %{with wayland}
